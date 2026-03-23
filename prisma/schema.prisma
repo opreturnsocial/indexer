@@ -1,0 +1,86 @@
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/client"
+}
+
+// Raw OP_RETURN outputs that contain candidate ORS data.
+// One row per OP_RETURN output. id is the stable pagination cursor.
+model IndexedTransaction {
+  id          Int    @id @default(autoincrement())
+  txid        String @unique
+  blockHeight Int
+  blockHash   String
+  txIndex     Int    // position of tx within block
+  outputIndex Int    // index of OP_RETURN output within tx
+  data        String // raw hex payload after OP_RETURN opcode
+  timestamp   Int    // unix block timestamp
+}
+
+// Decoded and signature-verified ORS records.
+// One row per valid ORS record (v0 or assembled v1).
+// id is the stable pagination cursor.
+model OrsRecord {
+  id           Int      @id @default(autoincrement())
+  txid         String   @unique // for v1 this is the chunk-0 txid
+  kind         Int      // 0x01=note 0x02=profile 0x03=reply 0x04=repost 0x05=quote-repost 0x06=follow
+  pubkey       String   // 64-char hex x-only pubkey
+  sig          String   // 128-char hex Schnorr signature
+  data         String   // raw hex OP_RETURN payload(s); for v1 chunks, all payloads concatenated in order
+  content      String?  // text content (kinds 1, 3, 5, 2)
+  parentTxid   String?  // referenced tx (kinds 3, 4, 5)
+  targetPubkey String?  // target pubkey (kind 6)
+  isFollow     Boolean? // follow=true / unfollow=false (kind 6)
+  propertyKind Int?     // profile property kind (kind 2)
+  blockHeight  Int
+  timestamp    Int      // unix block timestamp
+}
+
+// Derived: latest known profile per pubkey (updated as kind-2 records arrive).
+model Profile {
+  pubkey    String  @id
+  name      String?
+  bio       String?
+  avatarUrl String?
+  bannerUrl String?
+  website   String?
+  bot       Boolean?
+}
+
+// Derived: current follow state per (follower, followee) pair.
+model Follow {
+  followerPubkey String
+  followeePubkey String
+  txid           String
+  blockHeight    Int
+  isFollow       Boolean
+
+  @@id([followerPubkey, followeePubkey])
+}
+
+// Tracks which blocks have been fully scanned.
+model ScannedBlock {
+  height Int    @id
+  hash   String
+}
+
+// Temporary storage for v1 multi-chunk assembly.
+model PendingChunk {
+  id          Int    @id @default(autoincrement())
+  txid        String @unique
+  chunkNum    Int
+  totalChunks Int?   // only set for chunkNum == 0
+  bodySlice   String // hex-encoded body slice
+  blockHeight Int
+  timestamp   Int    // unix block timestamp
+}
+
+// Single-row table tracking scan progress.
+model ScannerState {
+  id        Int @id @default(1)
+  lastBlock Int @default(0)
+}
