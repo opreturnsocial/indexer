@@ -14,11 +14,9 @@ Deploy the ORS indexer service to a VPS that already runs bitcoin Core (IBD comp
 
 ### 1.1 Node.js 20 + Yarn
 
-```bash
-curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
-sudo apt install -y nodejs
-sudo npm install -g yarn
-```
+- install NVM
+- `nvm install --lts`
+- `npm install -g yarn`
 
 ---
 
@@ -86,9 +84,22 @@ yarn build
 
 ## Phase 3 - Systemd Service
 
-### 3.1 Create service unit
+### 3.1 Find node path (NVM)
+
+Since NVM is used, node is not at `/usr/bin/node`. Find the real path:
 
 ```bash
+which node
+# e.g. /root/.nvm/versions/node/v22.14.0/bin/node
+```
+
+### 3.2 Create service unit
+
+Replace `<node-path>` with the output of `which node` above.
+
+```bash
+NODE_PATH=$(which node)
+
 sudo tee /etc/systemd/system/ors-indexer.service <<EOF
 [Unit]
 Description=ORS Indexer
@@ -98,7 +109,7 @@ After=network.target
 Type=simple
 User=$USER
 WorkingDirectory=/opt/ors-indexer
-ExecStart=/usr/bin/node /opt/ors-indexer/dist/index.js
+ExecStart=$NODE_PATH /opt/ors-indexer/dist/index.js
 Restart=on-failure
 RestartSec=5
 EnvironmentFile=/opt/ors-indexer/.env
