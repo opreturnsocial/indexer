@@ -45,7 +45,7 @@ async function getOrCreateScannerState(): Promise<number> {
   const startBlock = parseInt(process.env.START_BLOCK ?? "0", 10) || 0;
   const state = await prisma.scannerState.upsert({
     where: { id: 1 },
-    create: { id: 1, lastBlock: startBlock },
+    create: { id: 1, lastBlock: Math.max(0, startBlock - 1) },
     update: {},
   });
   return state.lastBlock;
