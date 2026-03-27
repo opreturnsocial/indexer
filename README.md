@@ -1,5 +1,8 @@
 # ORS Indexer
 
+- **[Mainnet](https://indexer.ors.dev)**
+- **[Testnet4](https://testnet4.indexer.ors.dev)**
+
 A standalone indexer for the [ORS protocol](https://github.com/orsprotocol/ors). Scans bitcoin blocks, extracts and verifies OP_RETURN-based ORS records, and exposes them via a simple HTTP API.
 
 Apps can query this indexer instead of connecting directly to a bitcoin Core node.
@@ -19,15 +22,15 @@ yarn dev
 
 ## Environment variables
 
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `DATABASE_URL` | `file:./dev.db` | SQLite database path |
-| `BITCOIN_RPC_HOST` | `127.0.0.1` | bitcoin Core RPC host |
-| `BITCOIN_RPC_PORT` | `8332` | bitcoin Core RPC port (8332 mainnet, 48332 testnet4) |
-| `BITCOIN_RPC_USER` | `bitcoinrpc` | RPC username |
-| `BITCOIN_RPC_PASS` | | RPC password |
-| `START_BLOCK` | `0` | Block height to begin scanning from. Use `940000` to start from the first mainnet ORS transaction. |
-| `PORT` | `3010` | HTTP server port |
+| Variable           | Default         | Description                                                                                        |
+| ------------------ | --------------- | -------------------------------------------------------------------------------------------------- |
+| `DATABASE_URL`     | `file:./dev.db` | SQLite database path                                                                               |
+| `BITCOIN_RPC_HOST` | `127.0.0.1`     | bitcoin Core RPC host                                                                              |
+| `BITCOIN_RPC_PORT` | `8332`          | bitcoin Core RPC port (8332 mainnet, 48332 testnet4)                                               |
+| `BITCOIN_RPC_USER` | `bitcoinrpc`    | RPC username                                                                                       |
+| `BITCOIN_RPC_PASS` |                 | RPC password                                                                                       |
+| `START_BLOCK`      | `0`             | Block height to begin scanning from. Use `940000` to start from the first mainnet ORS transaction. |
+| `PORT`             | `3010`          | HTTP server port                                                                                   |
 
 ## API
 
@@ -50,6 +53,7 @@ All paginated endpoints use **cursor-based pagination** on the `id` field. Save 
 Raw OP_RETURN outputs. Includes all OP_RETURN outputs, not just valid ORS records.
 
 Query params:
+
 - `limit` - max results (default 50, max 200)
 - `before` - return records with `id < before` (pagination cursor)
 
@@ -79,6 +83,7 @@ Single raw transaction by txid.
 Decoded and signature-verified ORS records.
 
 Query params:
+
 - `limit` - max results (default 50, max 200)
 - `before` - pagination cursor
 - `kind` - filter by ORS kind (1=note, 2=profile, 3=reply, 4=repost, 5=quote-repost, 6=follow)
@@ -159,14 +164,14 @@ Requires `X-Internal-Token: <INTERNAL_TOKEN>` header.
 
 ## ORS kinds
 
-| Kind | Value | Description |
-|------|-------|-------------|
-| Text note | `0x01` | Plain text post |
+| Kind           | Value  | Description                                  |
+| -------------- | ------ | -------------------------------------------- |
+| Text note      | `0x01` | Plain text post                              |
 | Profile update | `0x02` | Name, bio, avatar, banner, website, bot flag |
-| Text reply | `0x03` | Reply referencing a parent txid |
-| Repost | `0x04` | Pure repost of an existing record |
-| Quote repost | `0x05` | Repost with added commentary |
-| Follow | `0x06` | Follow or unfollow a pubkey |
+| Text reply     | `0x03` | Reply referencing a parent txid              |
+| Repost         | `0x04` | Pure repost of an existing record            |
+| Quote repost   | `0x05` | Repost with added commentary                 |
+| Follow         | `0x06` | Follow or unfollow a pubkey                  |
 
 ## Pagination example
 
@@ -178,7 +183,7 @@ async function fetchPage() {
   const url = cursor
     ? `/records?limit=50&before=${cursor}`
     : `/records?limit=50`;
-  const { records } = await fetch(url).then(r => r.json());
+  const { records } = await fetch(url).then((r) => r.json());
   if (records.length > 0) {
     cursor = records[records.length - 1].id; // smallest id = next cursor
   }
