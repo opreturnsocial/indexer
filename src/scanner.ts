@@ -1,6 +1,7 @@
 import crypto from "node:crypto";
 import * as tinysecp from "tiny-secp256k1";
 import {
+  ORS_MAGIC,
   parseORSPayload,
   parseV1Chunk,
   assembleV1Body,
@@ -128,6 +129,9 @@ async function scanBlock(height: number): Promise<void> {
 
       const payload = extractPayloadFromScript(vout.scriptPubKey.hex);
       if (!payload) continue;
+
+      // Skip non-ORS OP_RETURN outputs
+      if (payload.length < 3 || !payload.subarray(0, 3).equals(ORS_MAGIC)) continue;
 
       // Store raw OP_RETURN output
       await prisma.indexedTransaction.upsert({
